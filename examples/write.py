@@ -8,19 +8,15 @@ __author__ = "Christoph Pranzl"
 __version__ = "0.0.5"
 __license__ = "GPLv3"
 
-from mfrc522_i2c import MFRC522
-import signal
+import machine
+import time
 import random
+from mfrc522_i2c import MFRC522
 
 continue_reading = True
 
-
-def end_read(signal, frame):
-    """ Capture SIGINT for cleanup when script is aborted """
-    global continue_reading
-    print('Ctrl+C captured, ending read')
-    continue_reading = False
-
+i2cBus = machine.I2C(1, scl=machine.Pin(1), sda=machine.Pin(2))
+i2cAddress = 0x28
 
 def random_data(size=16):
     """ Create random data """
@@ -28,14 +24,6 @@ def random_data(size=16):
     for i in range(size):
         data.append(random.randint(0, 255))
     return (data)
-
-
-# Hook the SIGINT
-signal.signal(signal.SIGINT, end_read)
-
-# Reader is located at Bus 1, adress 0x28
-i2cBus = 1
-i2cAddress = 0x28
 
 # Create an object of the class MFRC522
 MFRC522Reader = MFRC522(i2cBus, i2cAddress)
@@ -67,7 +55,7 @@ while continue_reading:
                 # Authenticate
                 blockAddr = 8
                 (status, backData, backBits) = MFRC522Reader.authenticate(
-                    MFRC522Reader.MIFARE_AUTHKEY1,
+                    MFRC522Reader.MIFARE_AUTHKEY2,
                     blockAddr,
                     MFRC522Reader.MIFARE_KEY,
                     uid)
@@ -84,6 +72,8 @@ while continue_reading:
                             print(f'{backData[i]:02x} ', end='')
                         print('read')
 
+                        time.sleep(0.5)  # Give it some time, or else data can corrupt in transport
+
                         # Write new data to card
                         data = random_data()
 
@@ -96,6 +86,8 @@ while continue_reading:
                             for i in range(0, len(data)):
                                 print(f'{data[i]:02x} ', end='')
                             print('written')
+
+                            time.sleep(0.5) # Give it some time, or else data can corrupt in transport
 
                             # Read new data from card
                             (status, backData, backBits) = MFRC522Reader.read(

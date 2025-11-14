@@ -8,25 +8,12 @@ __author__ = "Christoph Pranzl"
 __version__ = "0.0.5"
 __license__ = "GPLv3"
 
+import machine
 from mfrc522_i2c import MFRC522
-import signal
-
 
 continue_reading = True
 
-
-def end_read(signal, frame):
-    """ Capture SIGINT for cleanup when script is aborted """
-    global continue_reading
-    print('Ctrl+C captured, ending read')
-    continue_reading = False
-
-
-# Hook the SIGINT
-signal.signal(signal.SIGINT, end_read)
-
-# Reader is located at Bus 1, adress 0x28
-i2cBus = 1
+i2cBus = machine.I2C(1, scl=machine.Pin(1), sda=machine.Pin(2))
 i2cAddress = 0x28
 
 # Create an object of the class MFRC522
@@ -59,7 +46,7 @@ while continue_reading:
                 # Authenticate
                 blockAddr = 8
                 (status, backData, backBits) = MFRC522Reader.authenticate(
-                    MFRC522Reader.MIFARE_AUTHKEY1,
+                    MFRC522Reader.MIFARE_AUTHKEY2,
                     blockAddr,
                     MFRC522Reader.MIFARE_KEY,
                     uid)
